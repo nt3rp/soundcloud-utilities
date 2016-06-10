@@ -40,6 +40,7 @@ class SoundCloudService(object):
 
     def download(self, url, **kwargs):
         # TODO: Probably doesn't belong here. Should likely have generic downloader
+        # TODO: Don't download if exists
         track = self.track(url)
         title = track.title.replace("/","-")
         url = "{}?client_id={}".format(track.download, self.__settings.get('application'))
