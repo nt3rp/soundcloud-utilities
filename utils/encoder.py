@@ -1,17 +1,26 @@
 from ffmpy import FFmpeg
+from glob import glob
 import os
 
 class VideoEncoder(object):
+    SRC_FOLDER = './data/'
+
     def __init__(self):
-        self.logo = './data/logo.png'
+        self.logo = '{}logo.png'.format(self.SRC_FOLDER)
         self.delete_audio = True
 
-    def audio_to_video(self, filename, video_filename=None, **kwargs):
-        # TODO: If filename is absent, convert all
+    def audio_to_video(self, filename=None, **kwargs):
+        if filename:
+            files = [filename]
+        else:
+            files = glob('{}*.m4a'.format(self.SRC_FOLDER))
+
+        map(self.__audio_to_video, files)
+
+    def __audio_to_video(self, filename=None, **kwargs):
         # TODO: Don't encode if already exists
-        if not video_filename:
-            title = os.path.splitext(filename)[0]
-            video_filename = '{}.mp4'.format(title)
+        title = os.path.splitext(filename)[0]
+        video_filename = '{}.mp4'.format(title)
 
         ff = FFmpeg(
             inputs={filename: None, self.logo: '-loop 1 -framerate 2'},

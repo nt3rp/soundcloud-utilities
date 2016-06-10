@@ -43,7 +43,7 @@ def main():
         'video', help='Encode audio to video'
     )
     encode_parser.add_argument(
-        'filename',
+        '--filename',
         help='Audio file to convert to video'
     )
     encode_parser.set_defaults(func=v().audio_to_video)
