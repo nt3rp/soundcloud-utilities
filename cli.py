@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import argparse
 from utils.sc import SoundCloudService as sc
+from utils.encoder import VideoEncoder as v
 
 # TODO: Assume some JSON file for credentials
 
@@ -32,6 +33,11 @@ def main():
     encode_parser = subparsers.add_parser(
         'video', help='Encode audio to video'
     )
+    encode_parser.add_argument(
+        'filename',
+        help='Audio file to convert to video'
+    )
+    encode_parser.set_defaults(func=v().audio_to_video)
 
     # ---- YouTube parser ----
     # TODO: Sync information between soundcloud and youtube?
