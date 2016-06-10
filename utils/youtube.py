@@ -127,6 +127,8 @@ class YouTube(object):
         #
         # self.__resumable_upload(request)
 
+        # TODO: Remove json file after successful upload
+
     def __resumable_upload(self, request):
         # TODO: Add more descriptive output
 

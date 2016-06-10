@@ -4,7 +4,7 @@ import os
 class VideoEncoder(object):
     def __init__(self):
         self.logo = './data/logo.png'
-        self.delete_audio = False
+        self.delete_audio = True
 
     def audio_to_video(self, filename, video_filename=None, **kwargs):
         # TODO: If filename is absent, convert all
@@ -21,6 +21,5 @@ class VideoEncoder(object):
         print ff.cmd
         ff.run()
 
-        # TODO: Cleanup!
         if self.delete_audio:
-            pass
+            os.remove(filename)
