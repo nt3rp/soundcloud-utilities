@@ -3,7 +3,7 @@ import os
 
 class VideoEncoder(object):
     def __init__(self):
-        self.logo = ''
+        self.logo = './data/logo.png'
 
     def audio_to_video(self, filename, video_filename=None, **kwargs):
         if not video_filename:

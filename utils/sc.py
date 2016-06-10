@@ -42,7 +42,7 @@ class SoundCloudService(object):
         # TODO: Probably doesn't belong here. Should likely have generic downloader
         track = self.track(url)
         title = track.title.replace("/","-")
-        url = "{}?client_id={}".format(track.url, self.__settings.get('application'))
+        url = "{}?client_id={}".format(track.download, self.__settings.get('application'))
         filename = u"./data/{}.m4a".format(title)
         response = requests.get(url, stream=True)
 
@@ -65,12 +65,16 @@ class Track(object):
     def __init__(self, track):
         self.title = track.title
         self.url = track.permalink_url
+        self.download = track.download_url
         self.slug = track.permalink
         self.description = track.description
         self.tags = Track.to_tag_list(track.tag_list)
         self.created_at = datetime.fromtimestamp(
             mktime(strptime(track.created_at, self.TIME_FORMAT))
         )
+
+    def __repr__(self):
+        return "%s(%r)" % (self.__class__, self.__dict__)
 
     @staticmethod
     def to_tag_list(input_string):
