@@ -2,10 +2,12 @@
 import argparse
 from utils.sc import SoundCloudService as sc
 from utils.encoder import VideoEncoder as v
+from utils.youtube import YouTube as yt
 
 # TODO: Assume some JSON file for credentials
 
 def main():
+    # TODO: Make 'filename' optional for encoder, youtube: default to 'all'
     parser = argparse.ArgumentParser(
         description='Utilities to work with SoundCloud and other services.'
     )
@@ -44,6 +46,29 @@ def main():
     youtube_parser = subparsers.add_parser(
         'youtube', help='Upload video to YouTube'
     )
+    youtube_parser.add_argument(
+        'filename',
+        help='Video file to upload'
+    )
+    youtube_parser.add_argument(
+        '--description',
+        help='Description for video'
+    )
+    youtube_parser.add_argument(
+        '--title',
+        help='Title for video'
+    )
+    youtube_parser.add_argument(
+        '--tags',
+        nargs='*',
+        help='Tags for video'
+    )
+    youtube_parser.add_argument(
+        '--additional-tags',
+        nargs='*',
+        help='Additional tags for video'
+    )
+    youtube_parser.set_defaults(func=yt().upload)
 
     # Process Arguments
     args, unknown = parser.parse_known_args()

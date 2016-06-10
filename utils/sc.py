@@ -5,6 +5,7 @@ import soundcloud
 import requests
 import shlex
 import json
+from datetimeencoder import DateTimeEncoder
 
 MEGABYTE = 1024*1024
 
@@ -62,6 +63,7 @@ class SoundCloudService(object):
 class Track(object):
     TIME_FORMAT = '%Y/%m/%d %H:%M:%S +0000'
     DEFAULT_TAGS = ['podcast']
+    SAVE_FOLDER = './data/'
 
     def __init__(self, track):
         self.title = track.title
@@ -76,6 +78,13 @@ class Track(object):
 
     def __repr__(self):
         return "%s(%r)" % (self.__class__, self.__dict__)
+
+    def save_to_json(self, filename=None):
+        if not filename:
+            filename = '{}{}.json'.format(self.SAVE_FOLDER, self.title.replace("/","-"))
+
+        with open(filename, 'w') as out:
+            json.dump(self.__dict__, out, cls=DateTimeEncoder)
 
     @staticmethod
     def to_tag_list(input_string):
