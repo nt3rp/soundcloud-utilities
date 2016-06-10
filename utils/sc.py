@@ -43,7 +43,7 @@ class SoundCloudService(object):
         track = self.track(url)
         title = track.title.replace("/","-")
         url = "{}?client_id={}".format(track.url, self.__settings.get('application'))
-        filename = u"{}.m4a".format(title)
+        filename = u"./data/{}.m4a".format(title)
         response = requests.get(url, stream=True)
 
         with open(filename, 'wb') as handle:
