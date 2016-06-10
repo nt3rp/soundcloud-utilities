@@ -51,7 +51,7 @@ class YouTube(object):
     }
 
     def __init__(self):
-        pass
+        self.delete_json = False
 
     def client(self):
         if self.__yt:
@@ -86,7 +86,7 @@ class YouTube(object):
         with open(filename) as f:
             obj = json.loads(f.read())
 
-        return obj
+        return obj.update({'filename': filename})
 
     def __initialize_upload(self, filename, **kwargs):
         try:
@@ -125,9 +125,14 @@ class YouTube(object):
         #     )
         # )
         #
-        # self.__resumable_upload(request)
-
-        # TODO: Remove json file after successful upload
+        # try:
+        #     self.__resumable_upload(request)
+        # except UploadException, e:
+        #     raise e
+        # else:
+        #     filename = obj.get('filename')
+        #     if filename and self.delete_json:
+        #         os.remove(filename)
 
     def __resumable_upload(self, request):
         # TODO: Add more descriptive output
@@ -144,12 +149,12 @@ class YouTube(object):
                     if 'id' in response:
                         print "Video id '%s' was successfully uploaded." % response['id']
                     else:
-                        exit("The upload failed with an unexpected response: %s" % response)
+                        raise UploadException("The upload failed with an unexpected response: %s" % response)
             except HttpError, e:
                 if e.resp.status in self.RETRIABLE_STATUS_CODES:
                     error = "A retriable HTTP error %d occurred:\n%s" % (e.resp.status, e.content)
                 else:
-                    raise
+                    raise UploadException(e)
             except self.RETRIABLE_EXCEPTIONS, e:
                 error = "A retriable error occurred: %s" % e
 
@@ -158,12 +163,16 @@ class YouTube(object):
                 retry += 1
 
                 if retry > self.MAX_RETRIES:
-                    exit("No longer attempting to retry.")
+                    raise UploadException("Exceeded max retries")
 
                 max_sleep = 2 ** retry
                 sleep_seconds = random.random() * max_sleep
                 print "Sleeping %f seconds and then retrying..." % sleep_seconds
                 time.sleep(sleep_seconds)
 
-class Video(object):
-    pass
+class UploadException(Exception):
+    def __init__(self, msg):
+        self.msg = msg
+
+    def __str__(self):
+        return repr(self.msg)
