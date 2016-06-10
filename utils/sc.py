@@ -30,7 +30,7 @@ class SoundCloudService(object):
         track = self.client().get('/resolve', url=url)
         return Track(track)
 
-    def tracks(self, format='list', since=None):
+    def tracks(self, since=None, format='list', least_recent=True):
         params = {
             'created_at[from]': since
         }
@@ -47,7 +47,12 @@ class SoundCloudService(object):
         if format == 'dict':
             return {track.title: Track(track) for track in tracks}
 
-        return map(Track, tracks)
+        track_list = map(Track, tracks)
+
+        if least_recent:
+            track_list.sort(key=lambda x: x.created_at)
+
+        return track_list
 
     def download(self, url=None, since=None, **kwargs):
         if url:
@@ -64,6 +69,7 @@ class SoundCloudService(object):
         filename = u"./data/{}.m4a".format(title)
         response = requests.get(url, stream=True)
 
+        print('Downloading {}...'.format(filename))
         with open(filename, 'wb') as handle:
             for data in tqdm(response.iter_content(chunk_size=10 * MEGABYTE)):
                 handle.write(data)
