@@ -1,8 +1,12 @@
 from time import strptime, mktime
 from datetime import datetime
+from tqdm import tqdm
 import soundcloud
+import requests
 import shlex
 import json
+
+MEGABYTE = 1024*1024
 
 class SoundCloudService(object):
     SOUNDCLOUD_SETTINGS_JSON='./data/soundcloud.json'
@@ -34,8 +38,17 @@ class SoundCloudService(object):
 
         return map(SoundCloud.track_to_dict, tracks)
 
-    def download(url):
-        return self.track(url)
+    def download(self, url, **kwargs):
+        # TODO: Probably doesn't belong here. Should likely have generic downloader
+        track = self.track(url)
+        title = track.title.replace("/","-")
+        url = "{}?client_id={}".format(track.url, self.__settings.get('application'))
+        filename = u"{}.m4a".format(title)
+        response = requests.get(url, stream=True)
+
+        with open(filename, 'wb') as handle:
+            for data in tqdm(response.iter_content(chunk_size=10 * MEGABYTE)):
+                handle.write(data)
 
     def settings_from_json(self, filename=None):
         if not filename:
@@ -51,16 +64,16 @@ class Track(object):
 
     def __init__(self, track):
         self.title = track.title
-        self.url = track.permalink_url,
-        self.slug = track.permalink,
-        self.description = track.description,
-        self.tags = to_tag_list(track.tag_list),
+        self.url = track.permalink_url
+        self.slug = track.permalink
+        self.description = track.description
+        self.tags = Track.to_tag_list(track.tag_list)
         self.created_at = datetime.fromtimestamp(
             mktime(strptime(track.created_at, self.TIME_FORMAT))
         )
 
     @staticmethod
-    def to_tag_list():
+    def to_tag_list(input_string):
         tags = shlex.split(input_string)
         tags = [x.lower() for x in tags]
         tags = set(tags) | set(Track.DEFAULT_TAGS)

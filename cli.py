@@ -41,7 +41,6 @@ def main():
 
     # Process Arguments
     args, unknown = parser.parse_known_args()
-    print (args, unknown)
     kwargs = vars(args)
 
     # Run whichever sub-command is necessary
