@@ -5,6 +5,7 @@ import soundcloud
 import requests
 import shlex
 import json
+from urllib import urlencode
 from datetimeencoder import DateTimeEncoder
 
 MEGABYTE = 1024*1024
@@ -25,24 +26,39 @@ class SoundCloudService(object):
 
         return self.__client
 
-    def track(self, url):
+    def track_by_url(self, url):
         track = self.client().get('/resolve', url=url)
         return Track(track)
 
-    def tracks(self, format='list'):
-        tracks = self.client().get('/users/{0}/tracks'.format(
-            self.__settings.get('user')
-        ), limit=1)
+    def tracks(self, format='list', since=None):
+        params = {
+            'created_at[from]': since
+        }
+
+        query = urlencode({k: v for k, v in params.iteritems() if v})
+        if query:
+            query = '?' + query
+
+        tracks = self.client().get('/users/{}/tracks{}'.format(
+            self.__settings.get('user'),
+            query
+        ), limit=self.LIMIT)
 
         if format == 'dict':
             return {track.title: Track(track) for track in tracks}
 
-        return map(SoundCloud.track_to_dict, tracks)
+        return map(Track, tracks)
 
-    def download(self, url, **kwargs):
-        # TODO: Probably doesn't belong here. Should likely have generic downloader
+    def download(self, url=None, since=None, **kwargs):
+        if url:
+            tracks = [self.track_by_url(url)]
+        else:
+            tracks = self.tracks(since=since)
+
+        map(self.__download_track, tracks)
+
+    def __download_track(self, track):
         # TODO: Don't download if exists
-        track = self.track(url)
         title = track.title.replace("/","-")
         url = "{}?client_id={}".format(track.download, self.__settings.get('application'))
         filename = u"./data/{}.m4a".format(title)
@@ -51,6 +67,8 @@ class SoundCloudService(object):
         with open(filename, 'wb') as handle:
             for data in tqdm(response.iter_content(chunk_size=10 * MEGABYTE)):
                 handle.write(data)
+
+        track.save_to_json()
 
     def settings_from_json(self, filename=None):
         if not filename:

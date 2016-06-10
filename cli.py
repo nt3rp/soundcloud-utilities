@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import argparse
+from datetime import datetime
 from utils.sc import SoundCloudService as sc
 from utils.encoder import VideoEncoder as v
 from utils.youtube import YouTube as yt
@@ -22,12 +23,18 @@ def main():
     # TODO: Handle multiple files
 
     # ---- Download parser ----
+    # TODO: Since date: download all audio after a certain date
     download_parser = subparsers.add_parser(
         'download', help='Download audio'
     )
     download_parser.add_argument(
-        'url',
+        '--url',
         help='URL where soundtrack track can be found'
+    )
+    download_parser.add_argument(
+        '--since',
+        help='URL where soundtrack track can be found',
+        type=valid_date
     )
     download_parser.set_defaults(func=sc().download)
 
@@ -76,6 +83,13 @@ def main():
 
     # Run whichever sub-command is necessary
     args.func(**kwargs)
+
+def valid_date(s):
+    try:
+        return datetime.strptime(s, "%Y-%m-%d")
+    except ValueError:
+        msg = "Not a valid date: '{0}'.".format(s)
+        raise argparse.ArgumentTypeError(msg)
 
 if __name__ == "__main__":
     main()
