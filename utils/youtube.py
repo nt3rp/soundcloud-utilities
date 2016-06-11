@@ -63,7 +63,7 @@ class YouTube(object):
 
     def __init__(self):
         self.__client = None
-        self.delete_json = False
+        self.delete_files = True
 
     def client(self):
         if self.__client:
@@ -154,8 +154,13 @@ class YouTube(object):
         except UploadException, e:
             raise e
         else:
+            if not self.delete_files:
+                return
+
+            os.remove(filename)
+
             data_filename = obj.get('filename')
-            if data_filename and self.delete_json:
+            if data_filename:
                 os.remove(data_filename)
 
     def __resumable_upload(self, request):
