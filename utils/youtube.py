@@ -4,7 +4,9 @@ import os
 import sys
 import time
 import json
+from argparse import Namespace
 from datetime import datetime
+from glob import glob
 
 from apiclient.discovery import build
 from apiclient.errors import HttpError
@@ -17,7 +19,8 @@ class YouTube(object):
     YOUTUBE_READ_WRITE_SCOPE = "https://www.googleapis.com/auth/youtube"
     YOUTUBE_API_SERVICE_NAME = "youtube"
     YOUTUBE_API_VERSION = "v3"
-    CLIENT_SECRETS_FILE = "./data/youtube.json"
+    SRC_FOLDER = './data/'
+    CLIENT_SECRETS_FILE = "{}youtube.json".format(SRC_FOLDER)
 
     MAX_RETRIES = 10
     RETRIABLE_STATUS_CODES = [500, 502, 503, 504]
@@ -31,6 +34,14 @@ class YouTube(object):
         httplib.CannotSendHeader,
         httplib.ResponseNotReady,
         httplib.BadStatusLine
+    )
+
+    # Hack: Otherwise, will use arguments passed to main application
+    RUN_FLOW_ARGS = Namespace(
+        logging_level='ERROR',
+        auth_host_name='localhost',
+        noauth_local_webserver=False,
+        auth_host_port=[8080, 8090]
     )
 
     PRIVATE = 'private'
@@ -51,33 +62,47 @@ class YouTube(object):
     }
 
     def __init__(self):
+        self.__client = None
         self.delete_json = False
 
     def client(self):
-        if self.__yt:
-            return self.__yt
+        if self.__client:
+            return self.__client
 
         flow = flow_from_clientsecrets(
             self.CLIENT_SECRETS_FILE,
-            scope=self.YOUTUBE_READ_WRITE_SCOPE
+            scope=self.YOUTUBE_READ_WRITE_SCOPE,
         )
 
         storage = Storage("%s-oauth2.json" % sys.argv[0])
         credentials = storage.get()
 
         if credentials is None or credentials.invalid:
-          credentials = run_flow(flow, storage)
+            credentials = run_flow(flow, storage, flags=self.RUN_FLOW_ARGS)
 
-        self.__yt = build(
+        self.__client = build(
             self.YOUTUBE_API_SERVICE_NAME,
             self.YOUTUBE_API_VERSION,
             http=credentials.authorize(httplib2.Http())
         )
 
-        return self.__yt
+        return self.__client
 
-    def upload(self, filename, **kwargs):
-        self.__initialize_upload(filename, **kwargs)
+    def auth(self, **kwargs):
+        # hack
+        del kwargs['func']
+        self.client()
+
+    def upload(self, filename=None, **kwargs):
+        # hack
+        del kwargs['func']
+
+        if filename:
+            files = [filename]
+        else:
+            files = glob('{}*.mp4'.format(self.SRC_FOLDER))
+
+        map(lambda x: self.__initialize_upload(x, **kwargs), files)
 
     def __upload_details_from_file(self, filename):
         filename = '{}.json'.format(os.path.splitext(filename)[0])
@@ -86,7 +111,8 @@ class YouTube(object):
         with open(filename) as f:
             obj = json.loads(f.read())
 
-        return obj.update({'filename': filename})
+        obj.update({'filename': filename})
+        return obj
 
     def __initialize_upload(self, filename, **kwargs):
         try:
@@ -113,26 +139,24 @@ class YouTube(object):
             }
         }
 
-        print body
+        request = self.client().videos().insert(
+            part=",".join(body.keys()),
+            body=body,
+            media_body=MediaFileUpload(
+                filename,
+                chunksize=-1,
+                resumable=True
+            )
+        )
 
-        # request = self.client().videos().insert(
-        #     part=",".join(body.keys()),
-        #     body=body,
-        #     media_body=MediaFileUpload(
-        #         filename,
-        #         chunksize=-1,
-        #         resumable=True
-        #     )
-        # )
-        #
-        # try:
-        #     self.__resumable_upload(request)
-        # except UploadException, e:
-        #     raise e
-        # else:
-        #     filename = obj.get('filename')
-        #     if filename and self.delete_json:
-        #         os.remove(filename)
+        try:
+            self.__resumable_upload(request)
+        except UploadException, e:
+            raise e
+        else:
+            data_filename = obj.get('filename')
+            if data_filename and self.delete_json:
+                os.remove(data_filename)
 
     def __resumable_upload(self, request):
         # TODO: Add more descriptive output

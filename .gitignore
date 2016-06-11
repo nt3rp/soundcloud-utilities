@@ -2,3 +2,4 @@ data/*
 *.pyc
 *.m4a
 *.DS_store
+*-oauth2.json

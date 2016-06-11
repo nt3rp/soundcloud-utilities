@@ -54,7 +54,7 @@ def main():
         'youtube', help='Upload video to YouTube'
     )
     youtube_parser.add_argument(
-        'filename',
+        '--filename',
         help='Video file to upload'
     )
     youtube_parser.add_argument(
@@ -76,6 +76,11 @@ def main():
         help='Additional tags for video'
     )
     youtube_parser.set_defaults(func=yt().upload)
+
+    youtube_auth_parser = subparsers.add_parser(
+        'auth', help='Authorize YouTube'
+    )
+    youtube_auth_parser.set_defaults(func=yt().auth)
 
     # Process Arguments
     args, unknown = parser.parse_known_args()
