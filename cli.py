@@ -75,7 +75,16 @@ def main():
         nargs='*',
         help='Additional tags for video'
     )
-    youtube_parser.set_defaults(func=yt().upload)
+    youtube_parser.add_argument(
+        '--public',
+        dest='public',
+        action='store_true',
+        help='Additional tags for video'
+    )
+    youtube_parser.set_defaults(
+        func=yt().upload,
+        public=False
+    )
 
     youtube_auth_parser = subparsers.add_parser(
         'auth', help='Authorize YouTube'

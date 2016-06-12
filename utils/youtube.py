@@ -126,6 +126,10 @@ class YouTube(object):
         if tags:
             obj['tags'] += tags
 
+        privacy = self.PRIVATE
+        if kwargs.get('public'):
+            privacy = self.PUBLIC
+
         body = {
             'snippet': {
                 'title': obj.get('title'),
@@ -135,7 +139,7 @@ class YouTube(object):
 
             },
             'status': {
-                'privacyStatus': self.PRIVATE,
+                'privacyStatus': privacy
             }
         }
 
