@@ -15,25 +15,17 @@ def main():
 
     subparsers = parser.add_subparsers(help='sub-command help')
 
-    # --- All-in-one parser
-    all_parser = subparsers.add_parser(
-        'all', help='All-in-one: audio download to YouTube upload'
-    )
-
-    # TODO: Handle multiple files
-
     # ---- Download parser ----
-    # TODO: Since date: download all audio after a certain date
     download_parser = subparsers.add_parser(
         'download', help='Download audio'
     )
     download_parser.add_argument(
         '--url',
-        help='URL where soundtrack track can be found'
+        help='URL where sound track can be found'
     )
     download_parser.add_argument(
         '--since',
-        help='URL where soundtrack track can be found',
+        help='Date of file creation to search after',
         type=valid_date
     )
     download_parser.set_defaults(func=sc().download)
@@ -79,7 +71,7 @@ def main():
         '--public',
         dest='public',
         action='store_true',
-        help='Additional tags for video'
+        help='If the video should be public'
     )
     youtube_parser.set_defaults(
         func=yt().upload,
@@ -91,12 +83,43 @@ def main():
     )
     youtube_auth_parser.set_defaults(func=yt().auth)
 
+    # --- All-in-one parser
+    all_parser = subparsers.add_parser(
+        'all', help='All-in-one: audio download to YouTube upload'
+    )
+    all_parser.add_argument(
+        '--public',
+        dest='public',
+        action='store_true',
+        help='Additional tags for video'
+    )
+    all_parser.add_argument(
+        '--additional-tags',
+        nargs='*',
+        help='Additional tags for video'
+    )
+    all_parser.add_argument(
+        '--url',
+        help='URL where sound track can be found'
+    )
+    all_parser.add_argument(
+        '--since',
+        help='Date of file creation to search after',
+        type=valid_date
+    )
+    all_parser.set_defaults(func=all_in_one)
+
     # Process Arguments
     args, unknown = parser.parse_known_args()
     kwargs = vars(args)
 
     # Run whichever sub-command is necessary
     args.func(**kwargs)
+
+def all_in_one(**kwargs):
+    sc().download(**kwargs)
+    v().audio_to_video(**kwargs)
+    yt().upload(**kwargs)
 
 def valid_date(s):
     try:
