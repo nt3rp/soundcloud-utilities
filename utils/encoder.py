@@ -13,7 +13,7 @@ class VideoEncoder(object):
         if filename:
             files = [filename]
         else:
-            files = glob('{}*.m4a'.format(self.SRC_FOLDER))
+            files = sorted(glob('{}*.m4a'.format(self.SRC_FOLDER)), key=os.path.getmtime)
 
         map(self.__audio_to_video, files)
 

@@ -100,7 +100,7 @@ class YouTube(object):
         if filename:
             files = [filename]
         else:
-            files = glob('{}*.mp4'.format(self.SRC_FOLDER))
+            files = sorted(glob('{}*.mp4'.format(self.SRC_FOLDER)), key=os.path.getmtime)
 
         map(lambda x: self.__initialize_upload(x, **kwargs), files)
 
